@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LowVolume</string>
+    <string name="app_title">Ограничение громкости</string>
+
+    <string name="status_on">Защита включена</string>
+    <string name="status_off">Защита выключена</string>
+    <string name="enabled_switch">Ограничивать громкость</string>
+    <string name="protection_started">Пароль сохранён, ограничение громкости включено</string>
+
+    <string name="limit_label">Максимальная громкость: %1$d%%</string>
+    <string name="limit_detail_line">%1$s: не выше %2$d из %3$d</string>
+    <string name="no_streams">Не выбрано ни одного потока</string>
+    <string name="raise_needs_password">Чтобы увеличить лимит, разблокируйте настройки паролем</string>
+    <string name="streams_header">Что ограничивать</string>
+
+    <string name="stream_music">Музыка, видео, игры</string>
+    <string name="stream_ring">Звонок</string>
+    <string name="stream_notification">Уведомления</string>
+    <string name="stream_alarm">Будильник</string>
+    <string name="stream_voice_call">Разговор</string>
+
+    <string name="lock_status_locked">🔒 Настройки заблокированы. Лимит можно только уменьшить.</string>
+    <string name="lock_status_unlocked">🔓 Настройки разблокированы до выхода с этого экрана.</string>
+    <string name="unlock">Разблокировать паролем</string>
+    <string name="lock">Заблокировать</string>
+    <string name="change_password">Сменить пароль</string>
+    <string name="password_changed">Пароль изменён</string>
+
+    <string name="admin_enable">Включить защиту от удаления</string>
+    <string name="admin_disable">Отключить защиту от удаления</string>
+    <string name="admin_removed">Защита от удаления отключена</string>
+    <string name="admin_explanation">Пока защита включена, LowVolume нельзя удалить без отключения её в приложении (по паролю) или в настройках телефона.</string>
+    <string name="admin_disable_warning">После отключения LowVolume можно будет удалить и снять ограничение громкости.</string>
+
+    <string name="battery_button">Разрешить работу в фоне (без оптимизации батареи)</string>
+    <string name="footer_hint">Без пароля громкость выше лимита поднять нельзя: приложение сразу её понижает. Увеличить лимит, убрать поток или выключить ограничение можно только после ввода пароля.</string>
+
+    <string name="enter_password_title">Введите пароль</string>
+    <string name="create_password_title">Придумайте пароль</string>
+    <string name="change_password_title">Новый пароль</string>
+    <string name="create_password_message">Пароль понадобится, чтобы поднять лимит громкости или выключить ограничение. Если забыть пароль, снять ограничение можно только удалив приложение.</string>
+    <string name="password_hint">Пароль</string>
+    <string name="new_password_hint">Новый пароль</string>
+    <string name="repeat_password_hint">Повторите пароль</string>
+    <string name="password_too_short">Минимум %1$d символа</string>
+    <string name="password_mismatch">Пароли не совпадают</string>
+    <string name="password_wrong">Неверный пароль. Осталось попыток: %1$d</string>
+    <string name="password_locked_out">Слишком много попыток. Повторите через %1$d с</string>
+    <string name="ok">ОК</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+
+    <string name="notification_channel">Ограничение громкости</string>
+    <string name="notification_title">Громкость ограничена</string>
+    <string name="notification_text">Не выше %1$d%%</string>
+</resources>
