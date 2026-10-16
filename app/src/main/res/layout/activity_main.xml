@@ -25,6 +25,17 @@
             android:textAppearance="@android:style/TextAppearance.Material.Subhead"
             android:textStyle="bold" />
 
+        <TextView
+            android:id="@+id/gap_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@color/warning_background"
+            android:padding="12dp"
+            android:textAppearance="@android:style/TextAppearance.Material.Body1"
+            android:textColor="@color/warning_text"
+            android:visibility="gone" />
+
         <Switch
             android:id="@+id/enabled_switch"
             android:layout_width="match_parent"

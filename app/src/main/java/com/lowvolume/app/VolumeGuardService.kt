@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 
@@ -30,10 +31,12 @@ class VolumeGuardService : Service() {
 
     private lateinit var settings: AppSettings
     private val handler = Handler(Looper.getMainLooper())
+    private var lastHeartbeat = 0L
 
     private val poll = object : Runnable {
         override fun run() {
             enforce()
+            heartbeat()
             handler.postDelayed(this, POLL_INTERVAL_MS)
         }
     }
@@ -55,6 +58,7 @@ class VolumeGuardService : Service() {
     override fun onCreate() {
         super.onCreate()
         settings = AppSettings(this)
+        recordGap()
         createChannel()
         startInForeground()
 
@@ -108,10 +112,44 @@ class VolumeGuardService : Service() {
 
     private fun startInForeground() {
         val notification = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: RuntimeException) {
+            // Android 12+ может запретить это, когда система сама перезапускает
+            // убитый сервис. Раньше это роняло приложение и ограничение пропадало;
+            // теперь сервис продолжает работать, пока система позволяет.
+            Log.w(TAG, "Cannot enter foreground", e)
+        }
+    }
+
+    /** Раз в минуту отмечаем, что защита работает. */
+    private fun heartbeat() {
+        if (!settings.enabled) return
+        val now = SystemClock.elapsedRealtime()
+        if (lastHeartbeat != 0L && now - lastHeartbeat < HEARTBEAT_INTERVAL_MS) return
+        lastHeartbeat = now
+        settings.lastAlive = System.currentTimeMillis()
+    }
+
+    /** Если защита долго не отмечалась, запоминаем перерыв, чтобы показать его владельцу. */
+    private fun recordGap() {
+        if (!settings.enabled) return
+        val lastAlive = settings.lastAlive
+        val now = System.currentTimeMillis()
+        if (lastAlive <= 0L || now - lastAlive < GAP_THRESHOLD_MS) return
+
+        val bootTime = now - SystemClock.elapsedRealtime()
+        if (bootTime > lastAlive) {
+            // Телефон перезагружали. Выключенный телефон — не нарушение, а вот
+            // долгий запуск защиты после включения — да (обычно запрещён автозапуск).
+            if (now - bootTime < GAP_THRESHOLD_MS) return
+            settings.recordGap(bootTime, now, afterReboot = true)
         } else {
-            startForeground(NOTIFICATION_ID, notification)
+            settings.recordGap(lastAlive, now, afterReboot = false)
         }
     }
 
@@ -146,6 +184,8 @@ class VolumeGuardService : Service() {
         private const val CHANNEL_ID = "volume_guard"
         private const val NOTIFICATION_ID = 1
         private const val POLL_INTERVAL_MS = 1_000L
+        private const val HEARTBEAT_INTERVAL_MS = 60_000L
+        private const val GAP_THRESHOLD_MS = 3 * 60_000L
 
         // Скрытые, но стабильно рассылаемые системой действия AudioManager.
         private const val ACTION_VOLUME_CHANGED = "android.media.VOLUME_CHANGED_ACTION"

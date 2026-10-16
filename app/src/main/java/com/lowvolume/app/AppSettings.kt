@@ -45,6 +45,28 @@ class AppSettings(context: Context) {
         get() = prefs.getLong(KEY_LOCKOUT_UNTIL, 0L)
         set(value) = prefs.edit().putLong(KEY_LOCKOUT_UNTIL, value).apply()
 
+    /** Последний момент, когда защита точно работала (обновляется раз в минуту). */
+    var lastAlive: Long
+        get() = prefs.getLong(KEY_LAST_ALIVE, 0L)
+        set(value) = prefs.edit().putLong(KEY_LAST_ALIVE, value).apply()
+
+    /** Последний замеченный перерыв в работе защиты. */
+    val lastGapStart: Long get() = prefs.getLong(KEY_GAP_START, 0L)
+    val lastGapEnd: Long get() = prefs.getLong(KEY_GAP_END, 0L)
+    val lastGapAfterReboot: Boolean get() = prefs.getBoolean(KEY_GAP_AFTER_REBOOT, false)
+
+    fun recordGap(start: Long, end: Long, afterReboot: Boolean) {
+        prefs.edit()
+            .putLong(KEY_GAP_START, start)
+            .putLong(KEY_GAP_END, end)
+            .putBoolean(KEY_GAP_AFTER_REBOOT, afterReboot)
+            .apply()
+    }
+
+    fun clearGap() {
+        prefs.edit().remove(KEY_GAP_START).remove(KEY_GAP_END).remove(KEY_GAP_AFTER_REBOOT).apply()
+    }
+
     companion object {
         private const val FILE = "settings"
 
@@ -55,6 +77,10 @@ class AppSettings(context: Context) {
         private const val KEY_PASSWORD_SALT = "password_salt"
         private const val KEY_FAILED_ATTEMPTS = "failed_attempts"
         private const val KEY_LOCKOUT_UNTIL = "lockout_until"
+        private const val KEY_LAST_ALIVE = "last_alive"
+        private const val KEY_GAP_START = "gap_start"
+        private const val KEY_GAP_END = "gap_end"
+        private const val KEY_GAP_AFTER_REBOOT = "gap_after_reboot"
 
         const val DEFAULT_LIMIT = 50
         val DEFAULT_STREAMS = setOf(AudioManager.STREAM_MUSIC)

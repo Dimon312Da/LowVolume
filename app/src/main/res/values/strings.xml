@@ -8,6 +8,11 @@
     <string name="enabled_switch">Ограничивать громкость</string>
     <string name="protection_started">Пароль сохранён, ограничение громкости включено</string>
 
+    <string name="gap_stopped">⚠ Защита не работала с %1$s до %2$s (%3$s). Похоже, приложение было остановлено вручную или его закрыла система. Нажмите, чтобы скрыть (нужен пароль).</string>
+    <string name="gap_after_reboot">⚠ После перезагрузки защита не работала с %1$s до %2$s (%3$s). Скорее всего, для LowVolume запрещён автозапуск. Нажмите, чтобы скрыть (нужен пароль).</string>
+    <string name="duration_minutes">%1$d мин</string>
+    <string name="duration_hours">%1$d ч %2$d мин</string>
+
     <string name="limit_label">Максимальная громкость: %1$d%%</string>
     <string name="limit_detail_line">%1$s: не выше %2$d из %3$d</string>
     <string name="no_streams">Не выбрано ни одного потока</string>

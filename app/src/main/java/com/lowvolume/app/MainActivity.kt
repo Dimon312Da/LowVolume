@@ -20,6 +20,8 @@ import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import java.text.DateFormat
+import java.util.Date
 
 class MainActivity : Activity() {
 
@@ -29,6 +31,7 @@ class MainActivity : Activity() {
     private lateinit var devicePolicyManager: DevicePolicyManager
 
     private lateinit var statusText: TextView
+    private lateinit var gapWarning: TextView
     private lateinit var enabledSwitch: Switch
     private lateinit var limitLabel: TextView
     private lateinit var limitSeek: SeekBar
@@ -57,6 +60,7 @@ class MainActivity : Activity() {
         devicePolicyManager = getSystemService(DevicePolicyManager::class.java)
 
         statusText = findViewById(R.id.status_text)
+        gapWarning = findViewById(R.id.gap_warning)
         enabledSwitch = findViewById(R.id.enabled_switch)
         limitLabel = findViewById(R.id.limit_label)
         limitSeek = findViewById(R.id.limit_seek)
@@ -80,6 +84,8 @@ class MainActivity : Activity() {
             }
         } else {
             VolumeGuardService.start(this)
+            // Сервис при запуске отмечает перерыв в работе — покажем его, когда он стартует.
+            statusText.postDelayed({ refreshUi() }, 1_200)
         }
         requestNotificationPermission()
     }
@@ -129,6 +135,9 @@ class MainActivity : Activity() {
                 refreshUi()
                 requireUnlock {
                     settings.enabled = false
+                    // Выключено владельцем — это не перерыв, о котором нужно предупреждать.
+                    settings.lastAlive = 0L
+                    settings.clearGap()
                     refreshUi()
                 }
             }
@@ -156,6 +165,13 @@ class MainActivity : Activity() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
         })
+
+        gapWarning.setOnClickListener {
+            requireUnlock {
+                settings.clearGap()
+                refreshUi()
+            }
+        }
 
         lockButton.setOnClickListener {
             if (unlocked) {
@@ -225,6 +241,7 @@ class MainActivity : Activity() {
 
         limitSeek.progress = settings.limitPercent
         updateLimitTexts()
+        updateGapWarning()
 
         val streams = settings.streams
         for ((stream, box) in streamBoxes) box.isChecked = stream in streams
@@ -254,6 +271,30 @@ class MainActivity : Activity() {
                 )
             }
         limitDetails.text = details.ifEmpty { getString(R.string.no_streams) }
+    }
+
+    /** Показывает предупреждение, если защита какое-то время не работала. */
+    private fun updateGapWarning() {
+        val start = settings.lastGapStart
+        val end = settings.lastGapEnd
+        if (start <= 0L || end <= start) {
+            gapWarning.visibility = View.GONE
+            return
+        }
+        val format = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+        val minutes = ((end - start) / 60_000).toInt()
+        val duration = if (minutes < 60) {
+            getString(R.string.duration_minutes, minutes)
+        } else {
+            getString(R.string.duration_hours, minutes / 60, minutes % 60)
+        }
+        gapWarning.text = getString(
+            if (settings.lastGapAfterReboot) R.string.gap_after_reboot else R.string.gap_stopped,
+            format.format(Date(start)),
+            format.format(Date(end)),
+            duration,
+        )
+        gapWarning.visibility = View.VISIBLE
     }
 
     private fun requestNotificationPermission() {

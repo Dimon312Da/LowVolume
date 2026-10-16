@@ -3,4 +3,6 @@
     <color name="primary">#8AB4F8</color>
     <color name="status_on">#81C995</color>
     <color name="status_off">#F28B82</color>
+    <color name="warning_background">#4A3418</color>
+    <color name="warning_text">#FFD8A8</color>
 </resources>
