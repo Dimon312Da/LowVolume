@@ -42,11 +42,11 @@ class VolumeGuardService : Service() {
     }
 
     private val volumeReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) = enforce()
+        override fun onReceive(context: Context, intent: Intent) = enforceBurst()
     }
 
     private val settingsObserver = object : ContentObserver(handler) {
-        override fun onChange(selfChange: Boolean) = enforce()
+        override fun onChange(selfChange: Boolean) = enforceBurst()
     }
 
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
@@ -88,7 +88,9 @@ class VolumeGuardService : Service() {
     }
 
     override fun onDestroy() {
-        handler.removeCallbacks(poll)
+        // Снимаем и опрос, и отложенные повторы серии, чтобы ничего не сработало
+        // на уже уничтоженном сервисе.
+        handler.removeCallbacksAndMessages(null)
         settings.prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
         contentResolver.unregisterContentObserver(settingsObserver)
         unregisterReceiver(volumeReceiver)
@@ -99,6 +101,20 @@ class VolumeGuardService : Service() {
 
     private fun enforce() {
         VolumeLimiter.enforce(this, settings)
+    }
+
+    /**
+     * Короткая серия сбросов после изменения громкости. Пока палец держит
+     * системный слайдер вверху, система на каждом движении заново поднимает
+     * громкость и перебивает одиночный сброс; серия быстрых повторов возвращает
+     * лимит, не дожидаясь следующего опроса. Это не блокирует сам слайдер —
+     * полностью закрыть его может только родительский контроль ОС.
+     */
+    private fun enforceBurst() {
+        enforce()
+        for (delay in BURST_DELAYS_MS) {
+            handler.postDelayed(::enforce, delay)
+        }
     }
 
     private fun onSettingsChanged() {
@@ -183,9 +199,14 @@ class VolumeGuardService : Service() {
         private const val TAG = "VolumeGuardService"
         private const val CHANNEL_ID = "volume_guard"
         private const val NOTIFICATION_ID = 1
-        private const val POLL_INTERVAL_MS = 1_000L
+        // Опрос чаще раза в секунду: слайдер, зажатый вверху без движения, не
+        // шлёт новых событий, и поймать его можно только опросом.
+        private const val POLL_INTERVAL_MS = 400L
         private const val HEARTBEAT_INTERVAL_MS = 60_000L
         private const val GAP_THRESHOLD_MS = 3 * 60_000L
+
+        /** Моменты после изменения громкости, когда повторяем сброс (мс). */
+        private val BURST_DELAYS_MS = longArrayOf(60L, 150L, 300L, 600L)
 
         // Скрытые, но стабильно рассылаемые системой действия AudioManager.
         private const val ACTION_VOLUME_CHANGED = "android.media.VOLUME_CHANGED_ACTION"
